@@ -1,4 +1,60 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,300;0,400;1,300;1,400&display=swap');
+
 body {
-    margin: 0;
-    padding: 0;
+  margin: 0;
+  padding: 0;
+  color: white;
+  font-family: 'Nunito', sans-serif;
+}
+
+.main_container {
+  background-image: url(./img/bg.jpg);
+  background-size: cover;
+  background-position: center;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 40px;
+}
+
+form {
+  display: flex;
+  gap: 10px;
+}
+
+form input[type=text] {
+  font-family: 'Nunito', sans-serif;
+  font-size: 1.3rem;
+  border-radius: 5px;
+  border: 0;
+  text-align:center;
+  outline: none;
+}
+
+.search-button {
+  background: transparent;
+  border: none;
+  outline: none;
+  display: flex;
+  align-items: center;
+}
+
+.search-button img {
+  width: 25px;
+  height: 25px;
+  object-fit: cover;
+  z-index: 2;
+}
+
+.search-button img:hover {
+  cursor: pointer;
+}
+
+.weatherForecast {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  width: 95%;
 }
