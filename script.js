@@ -1,29 +1,38 @@
+/* eslint-disable func-names */
 (function () {
-  let startCity = 'London';
+  const settings = {
+    city: 'London',
+    tempInCelsius: true,
+    lastForecastObject: {},
+  };
 
-  //FORM
+  // FORM
   const form = document.querySelector('form');
   const inputField = document.querySelector('.inputField');
+  const warning = document.querySelector('.warning');
 
-  //DATA FOR USER
+  // DATA FOR USER
   const cityForUser = document.querySelector('.city');
-  const temperature = document.querySelector('.temperature');
-  const feelsLike = document.querySelector('.feelsLike');
+  const tempForUser = document.querySelector('.temperature');
+  const feelsLikeForUser = document.querySelector('.feelsLike');
   const weatherIcon = document.querySelector('.weatherIcon');
-  const windSpeed = document.querySelector('.windSpeed');
-  const humidity = document.querySelector('.humidity');
-  const pressure = document.querySelector('.pressure');
+  const decsriptionForUser = document.querySelector('.weatherDescription');
+  const windSpeedForUser = document.querySelector('.windSpeed');
+  const humidityForUser = document.querySelector('.humidity');
+  const pressureForUser = document.querySelector('.pressure');
+
+  // SWITCH Celsius and Fahrenheit
+  const switcher = document.querySelector('.switcher');
+  const tempSymbols = document.querySelectorAll('.tempSymbol');
 
   function extractWeatherForecats(response) {
     const city = response.name;
-    const temp = Math.round(response.main.temp - 273.15);
-    const feelsLike = Math.round(response.main['feels_like'] - 273.15);
-    const pressure = response.main.pressure;
+    const { temp, pressure, humidity } = response.main;
+    const feelsLike = response.main.feels_like;
     const weatherMain = response.weather[0].main;
     const weatherDescription = response.weather[0].description;
-    const icon = response.weather[0].icon;
+    const { icon } = response.weather[0];
     const windSpeed = response.wind.speed;
-    const humidity = response.main.humidity;
     return {
       city,
       temp,
@@ -37,44 +46,98 @@
     };
   }
 
+  function saveToLocalStorage() {
+    localStorage.setItem('settings', JSON.stringify(settings));
+  }
+
+  function loadFromLocalStorage() {
+    const savedObject = JSON.parse(localStorage.getItem('settings'));
+    if (savedObject && savedObject.lastForecastObject.city.length > 0) {
+      settings.city = savedObject.city;
+      settings.tempInCelsius = savedObject.tempInCelsius;
+      settings.lastForecastObject = savedObject.lastForecastObject;
+    }
+  }
+
   function resetForm() {
     inputField.value = '';
+    warning.classList.remove('showWarning');
   }
 
   async function getWeatherForecast() {
     const apiKey = '00b18f9e9ee81d61cd05778ae304e07f';
-    const city = inputField.value || startCity;
-    startCity = '';
-    if (city === '') return;
-    try {
-      const response = await fetch(
-        `http://api.openweathermap.org/data/2.5/weather?q=${city}&APPID=${apiKey}`
-      );
-      return response.json();
-    } catch {
-      // TODO add error message for user
-      console.log('city is not found');
+    const city = inputField.value || settings.city;
+    const response = await fetch(
+      `http://api.openweathermap.org/data/2.5/weather?q=${city}&units=${settings.metric}&APPID=${apiKey}`,
+    );
+    return response.json();
+  }
+
+  function degreesIcon() {
+    let result = '';
+    if (settings.tempInCelsius) {
+      switcher.textContent = 'display °F';
+      result = '°C';
+    } else {
+      switcher.textContent = 'display °C';
+      result = '°F';
     }
+    return result;
+  }
+
+  function tempConverter(tempInKelvin) {
+    if (settings.tempInCelsius) {
+      return Math.round(tempInKelvin - 273.15);
+    }
+    return Math.round((tempInKelvin - 273.15) * 1.8 + 32);
   }
 
   function renderForecast(forecastObject) {
     cityForUser.textContent = forecastObject.city;
-    temperature.textContent = forecastObject.temp;
-    feelsLike.textContent = forecastObject.feelsLike;
-    windSpeed.textContent = forecastObject.windSpeed;
-    humidity.textContent = forecastObject.humidity;
-    pressure.textContent = forecastObject.pressure;
+    tempForUser.textContent = `${tempConverter(forecastObject.temp)}`;
+    feelsLikeForUser.textContent = `Feels like: ${tempConverter(
+      forecastObject.feelsLike,
+    )}`;
+    decsriptionForUser.textContent = forecastObject.weatherDescription;
+    windSpeedForUser.textContent = `${forecastObject.windSpeed} m/s`;
+    humidityForUser.textContent = `${forecastObject.humidity} %`;
+    pressureForUser.textContent = `${forecastObject.pressure} mmHg`;
+    tempSymbols.forEach((tempSymbol) => {
+      // eslint-disable-next-line no-param-reassign
+      tempSymbol.textContent = ` ${degreesIcon()}`;
+    });
+
+    weatherIcon.innerHTML = '';
+    const forecastIcon = document.createElement('img');
+    forecastIcon.src = `https://openweathermap.org/img/wn/${forecastObject.icon}@2x.png`;
+    weatherIcon.appendChild(forecastIcon);
   }
 
   async function updatePage() {
     const forecast = await getWeatherForecast();
-    console.log(forecast);
-    const forecastObject = extractWeatherForecats(forecast);
-    renderForecast(forecastObject);
-    resetForm();
+    if (forecast.cod === 200) {
+      if (inputField.value) settings.city = inputField.value;
+      const forecastObject = extractWeatherForecats(forecast);
+      settings.lastForecastObject = forecastObject;
+      saveToLocalStorage();
+      renderForecast(forecastObject);
+      resetForm();
+    } else {
+      warning.classList.add('showWarning');
+    }
   }
 
-  // getWeatherForecast('London');
+  function changeTempSymbol() {
+    settings.tempInCelsius = !settings.tempInCelsius;
+    saveToLocalStorage();
+    renderForecast(settings.lastForecastObject);
+  }
+
+  // localStorage.clear();
+
+  loadFromLocalStorage();
   updatePage();
+
   form.addEventListener('submit', updatePage);
-})();
+  switcher.addEventListener('click', changeTempSymbol);
+}());
