@@ -160,3 +160,13 @@ form input[type=text] {
 .switcher:hover {
   cursor: pointer;
 }
+
+.forecastColumn * {
+  opacity: 1;
+  transition: 0.25s ease-in-out;
+}
+
+.hideForecast {
+  opacity: 0;
+  /* transition: 0.25s ease-in-out; */
+}

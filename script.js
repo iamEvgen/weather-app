@@ -20,6 +20,7 @@
   const windSpeedForUser = document.querySelector('.windSpeed');
   const humidityForUser = document.querySelector('.humidity');
   const pressureForUser = document.querySelector('.pressure');
+  const forecastColumnsChilds = document.querySelectorAll('.forecastColumn *');
 
   // SWITCH Celsius and Fahrenheit
   const switcher = document.querySelector('.switcher');
@@ -27,7 +28,8 @@
 
   function extractWeatherForecats(response) {
     const city = response.name;
-    const { temp, pressure, humidity } = response.main;
+    const { temp, humidity } = response.main;
+    const pressure = Math.round(response.main.pressure * 0.75);
     const feelsLike = response.main.feels_like;
     const weatherMain = response.weather[0].main;
     const weatherDescription = response.weather[0].description;
@@ -67,10 +69,14 @@
   async function getWeatherForecast() {
     const apiKey = '00b18f9e9ee81d61cd05778ae304e07f';
     const city = inputField.value || settings.city;
-    const response = await fetch(
-      `http://api.openweathermap.org/data/2.5/weather?q=${city}&units=${settings.metric}&APPID=${apiKey}`,
-    );
-    return response.json();
+    try {
+      const response = await fetch(
+        `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=${settings.metric}&APPID=${apiKey}`,
+      );
+      return response.json();
+    } catch {
+      return 'error';
+    }
   }
 
   function degreesIcon() {
@@ -113,18 +119,40 @@
     weatherIcon.appendChild(forecastIcon);
   }
 
+  async function hideForecast() {
+    forecastColumnsChilds.forEach((element) => {
+      element.classList.add('hideForecast');
+    });
+  }
+
+  async function showForecast() {
+    forecastColumnsChilds.forEach((element) => {
+      element.classList.remove('hideForecast');
+    });
+  }
+
   async function updatePage() {
     const forecast = await getWeatherForecast();
+    if (forecast === 'error') return;
     if (forecast.cod === 200) {
       if (inputField.value) settings.city = inputField.value;
       const forecastObject = extractWeatherForecats(forecast);
       settings.lastForecastObject = forecastObject;
       saveToLocalStorage();
-      renderForecast(forecastObject);
+      hideForecast();
+      setTimeout(() => {
+        renderForecast(forecastObject);
+      }, 250);
       resetForm();
+      setTimeout(showForecast, 350);
     } else {
       warning.classList.add('showWarning');
     }
+  }
+
+  function submitForm(event) {
+    event.preventDefault();
+    updatePage();
   }
 
   function changeTempSymbol() {
@@ -133,11 +161,9 @@
     renderForecast(settings.lastForecastObject);
   }
 
-  // localStorage.clear();
-
   loadFromLocalStorage();
   updatePage();
 
-  form.addEventListener('submit', updatePage);
+  form.addEventListener('submit', submitForm);
   switcher.addEventListener('click', changeTempSymbol);
 }());
