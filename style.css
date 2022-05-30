@@ -151,12 +151,6 @@ form input[type=text] {
   display: flex;
 }
 
-.switcher {
-  opacity: 0.5;
-  margin-left: auto;
-  align-self: flex-start;
-}
-
 .switcher:hover {
   cursor: pointer;
 }
@@ -168,5 +162,10 @@ form input[type=text] {
 
 .hideForecast {
   opacity: 0;
-  /* transition: 0.25s ease-in-out; */
+}
+
+.switcher {
+  opacity: 0.5;
+  margin-left: auto;
+  align-self: flex-start;
 }
